@@ -1,0 +1,726 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+local TOOL_NAME = "Punch"
+local CHECK_INTERVAL = 0.3
+local CLICK_INTERVAL = 0.05
+local TELEPORT_OFFSET = Vector3.new(0, 0.5, 0)
+local TELEPORT_INTERVAL = 0.15
+local MAX_TARGET_TIME = 2
+
+local isEnabled = false
+local isClicking = false
+local currentTarget = nil
+local currentTool = nil
+local statusText = "Off"
+local clickCoroutine = nil
+local targetCoroutine = nil
+local respawnCheckCoroutine = nil
+local teleportCoroutine = nil
+local targetTimer = 0
+local guiElements = {}
+local screenGui = nil
+local isFullyReset = false
+
+local function getStrength(player)
+    local leaderstats = player:FindFirstChild("leaderstats")
+    if not leaderstats then return 0 end
+    local strength = leaderstats:FindFirstChild("Strength")
+    if not strength then return 0 end
+    return strength.Value
+end
+
+local function getPlayerHealth(player)
+    local character = player.Character
+    if not character then return 0 end
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not humanoid then return 0 end
+    return humanoid.Health
+end
+
+local function getWeakerPlayers()
+    local myStrength = getStrength(LocalPlayer)
+    local weakerPlayers = {}
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local character = player.Character
+            if character and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart") then
+                local strength = getStrength(player)
+                if strength < myStrength then
+                    table.insert(weakerPlayers, {
+                        player = player,
+                        strength = strength
+                    })
+                end
+            end
+        end
+    end
+    
+    table.sort(weakerPlayers, function(a, b)
+        return a.strength < b.strength
+    end)
+    
+    return weakerPlayers
+end
+
+local function teleportToPlayer(targetPlayer)
+    if not targetPlayer then return false end
+    
+    local character = targetPlayer.Character
+    if not character then return false end
+    
+    local targetRoot = character:FindFirstChild("HumanoidRootPart")
+    if not targetRoot then return false end
+    
+    local myCharacter = LocalPlayer.Character
+    if not myCharacter then return false end
+    
+    local myRoot = myCharacter:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return false end
+    
+    local targetPos = targetRoot.Position + TELEPORT_OFFSET
+    myRoot.CFrame = CFrame.new(targetPos)
+    
+    return true
+end
+
+local function findToolByName()
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    if not backpack then return nil end
+    
+    for _, tool in pairs(backpack:GetChildren()) do
+        if tool:IsA("Tool") and tool.Name == TOOL_NAME then
+            return tool
+        end
+    end
+    
+    local character = LocalPlayer.Character
+    if character then
+        for _, tool in pairs(character:GetChildren()) do
+            if tool:IsA("Tool") and tool.Name == TOOL_NAME then
+                return tool
+            end
+        end
+    end
+    
+    return nil
+end
+
+local function equipTool()
+    local character = LocalPlayer.Character
+    if not character then return nil end
+    
+    local tool = findToolByName()
+    if not tool then return nil end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return nil end
+    
+    local currentTool = character:FindFirstChildOfClass("Tool")
+    if currentTool and currentTool == tool then
+        return tool
+    end
+    
+    pcall(function()
+        humanoid:EquipTool(tool)
+    end)
+    
+    task.wait(0.2)
+    return tool
+end
+
+local function clickTool(tool)
+    if not tool then return false end
+    
+    local clicked = false
+    
+    pcall(function()
+        tool:Activate()
+        clicked = true
+    end)
+    
+    if not clicked then
+        local clickEvent = tool:FindFirstChild("ClickEvent")
+        if clickEvent then
+            pcall(function()
+                clickEvent:FireServer()
+                clicked = true
+            end)
+        end
+    end
+    
+    if not clicked then
+        local remote = tool:FindFirstChild("RemoteEvent")
+        if remote then
+            pcall(function()
+                remote:FireServer()
+                clicked = true
+            end)
+        end
+    end
+    
+    if not clicked then
+        local remoteFunc = tool:FindFirstChild("RemoteFunction")
+        if remoteFunc then
+            pcall(function()
+                remoteFunc:InvokeServer()
+                clicked = true
+            end)
+        end
+    end
+    
+    return clicked
+end
+
+local function startAutoClicker(tool)
+    if not tool then return end
+    
+    isClicking = true
+    currentTool = tool
+    
+    if clickCoroutine then
+        coroutine.close(clickCoroutine)
+        clickCoroutine = nil
+    end
+    
+    clickCoroutine = coroutine.create(function()
+        while isEnabled and isClicking and currentTool do
+            if not currentTool.Parent or currentTool.Parent ~= LocalPlayer.Character then
+                local newTool = equipTool()
+                if newTool then
+                    currentTool = newTool
+                else
+                    break
+                end
+            end
+            
+            clickTool(currentTool)
+            task.wait(CLICK_INTERVAL)
+        end
+    end)
+    
+    coroutine.resume(clickCoroutine)
+end
+
+local function stopAutoClicker()
+    isClicking = false
+    currentTool = nil
+    
+    if clickCoroutine then
+        coroutine.close(clickCoroutine)
+        clickCoroutine = nil
+    end
+end
+
+local function startTeleportLoop()
+    if teleportCoroutine then
+        coroutine.close(teleportCoroutine)
+        teleportCoroutine = nil
+    end
+    
+    teleportCoroutine = coroutine.create(function()
+        while isEnabled do
+            if currentTarget then
+                local health = getPlayerHealth(currentTarget)
+                if health > 0 and currentTarget.Character and currentTarget.Character:FindFirstChild("HumanoidRootPart") then
+                    teleportToPlayer(currentTarget)
+                end
+            end
+            task.wait(TELEPORT_INTERVAL)
+        end
+    end)
+    
+    coroutine.resume(teleportCoroutine)
+end
+
+local function checkRespawn()
+    if respawnCheckCoroutine then
+        coroutine.close(respawnCheckCoroutine)
+        respawnCheckCoroutine = nil
+    end
+    
+    respawnCheckCoroutine = coroutine.create(function()
+        local wasDead = false
+        
+        while isEnabled do
+            local currentChar = LocalPlayer.Character
+            
+            if not currentChar or not currentChar:FindFirstChild("Humanoid") or currentChar.Humanoid.Health <= 0 then
+                if not wasDead then
+                    wasDead = true
+                    statusText = "Respawning..."
+                    stopAutoClicker()
+                end
+            else
+                if wasDead then
+                    wasDead = false
+                    statusText = "Respawned, re-equipping..."
+                    
+                    task.wait(0.5)
+                    
+                    if isEnabled then
+                        local tool = equipTool()
+                        if tool then
+                            startAutoClicker(tool)
+                            statusText = "Tool equipped: " .. tool.Name
+                        else
+                            statusText = "Tool not found: " .. TOOL_NAME
+                        end
+                    end
+                end
+            end
+            
+            task.wait(0.2)
+        end
+    end)
+    
+    coroutine.resume(respawnCheckCoroutine)
+end
+
+local function targetLoop()
+    if targetCoroutine then
+        coroutine.close(targetCoroutine)
+        targetCoroutine = nil
+    end
+    
+    targetCoroutine = coroutine.create(function()
+        local weakerPlayers = {}
+        local lastUpdateTime = 0
+        local targetIndex = 1
+        local currentTargetPlayer = nil
+        local targetStartTime = 0
+        
+        while isEnabled do
+            local myChar = LocalPlayer.Character
+            if not myChar or not myChar:FindFirstChild("Humanoid") or myChar.Humanoid.Health <= 0 then
+                task.wait(0.2)
+                continue
+            end
+            
+            if tick() - lastUpdateTime > CHECK_INTERVAL then
+                weakerPlayers = getWeakerPlayers()
+                lastUpdateTime = tick()
+                
+                if #weakerPlayers == 0 then
+                    statusText = "No weak players"
+                    currentTarget = nil
+                    currentTargetPlayer = nil
+                    
+                    if isClicking then
+                        stopAutoClicker()
+                    end
+                    
+                    task.wait(1)
+                    continue
+                end
+            end
+            
+            if #weakerPlayers > 0 then
+                if targetIndex > #weakerPlayers then
+                    targetIndex = 1
+                end
+                
+                local targetData = weakerPlayers[targetIndex]
+                local target = targetData.player
+                local health = getPlayerHealth(target)
+                
+                if health > 0 and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                    if currentTargetPlayer ~= target then
+                        currentTargetPlayer = target
+                        targetStartTime = tick()
+                        targetTimer = 0
+                    end
+                    
+                    targetTimer = tick() - targetStartTime
+                    
+                    if targetTimer < MAX_TARGET_TIME then
+                        currentTarget = target
+                        local strength = getStrength(target)
+                        statusText = target.Name .. " | HP: " .. math.floor(health) .. " | STR: " .. strength .. " | Time: " .. string.format("%.1f", targetTimer) .. "s"
+                        
+                        if not isClicking then
+                            local tool = equipTool()
+                            if tool then
+                                startAutoClicker(tool)
+                            else
+                                statusText = "Tool not found: " .. TOOL_NAME
+                            end
+                        end
+                        
+                        task.wait(0.1)
+                    else
+                        statusText = "Target timeout, switching..."
+                        targetIndex = targetIndex + 1
+                        currentTargetPlayer = nil
+                        targetTimer = 0
+                        
+                        if targetIndex > #weakerPlayers then
+                            targetIndex = 1
+                        end
+                        
+                        task.wait(0.1)
+                    end
+                else
+                    statusText = "Target dead, switching..."
+                    targetIndex = targetIndex + 1
+                    currentTargetPlayer = nil
+                    targetTimer = 0
+                    
+                    if targetIndex > #weakerPlayers then
+                        targetIndex = 1
+                    end
+                    
+                    if isClicking then
+                        stopAutoClicker()
+                    end
+                    
+                    task.wait(0.05)
+                end
+            end
+            
+            task.wait(0.1)
+        end
+    end)
+    
+    coroutine.resume(targetCoroutine)
+end
+
+local function resetAll()
+    print("=== RESETTING AUTO HUNTER ===")
+    
+    isEnabled = false
+    isClicking = false
+    currentTarget = nil
+    currentTool = nil
+    statusText = "Reset"
+    targetTimer = 0
+    isFullyReset = true
+    
+    if clickCoroutine then
+        coroutine.close(clickCoroutine)
+        clickCoroutine = nil
+        print("Click coroutine closed")
+    end
+    
+    if targetCoroutine then
+        coroutine.close(targetCoroutine)
+        targetCoroutine = nil
+        print("Target coroutine closed")
+    end
+    
+    if respawnCheckCoroutine then
+        coroutine.close(respawnCheckCoroutine)
+        respawnCheckCoroutine = nil
+        print("Respawn coroutine closed")
+    end
+    
+    if teleportCoroutine then
+        coroutine.close(teleportCoroutine)
+        teleportCoroutine = nil
+        print("Teleport coroutine closed")
+    end
+    
+    if screenGui then
+        screenGui:Destroy()
+        screenGui = nil
+        print("GUI destroyed")
+    end
+    
+    guiElements = {}
+    
+    print("=== AUTO HUNTER FULLY RESET ===")
+end
+
+local function createStatusGUI()
+    if screenGui then
+        screenGui:Destroy()
+        screenGui = nil
+    end
+    
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "AutoHunterStatus"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = LocalPlayer:FindFirstChild("PlayerGui") or game:GetService("CoreGui")
+    
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 420, 0, 170)
+    mainFrame.Position = UDim2.new(0, 15, 0, 15)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(18, 8, 28)
+    mainFrame.BackgroundTransparency = 0.1
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = screenGui
+    guiElements.mainFrame = mainFrame
+    
+    local shadow = Instance.new("Frame")
+    shadow.Size = UDim2.new(1, 4, 1, 4)
+    shadow.Position = UDim2.new(0, -2, 0, -2)
+    shadow.BackgroundColor3 = Color3.fromRGB(80, 30, 150)
+    shadow.BackgroundTransparency = 0.3
+    shadow.BorderSizePixel = 0
+    shadow.Parent = mainFrame
+    
+    local shadowCorner = Instance.new("UICorner")
+    shadowCorner.CornerRadius = UDim.new(0, 18)
+    shadowCorner.Parent = shadow
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 18)
+    corner.Parent = mainFrame
+    
+    local border = Instance.new("Frame")
+    border.Size = UDim2.new(1, 0, 1, 0)
+    border.BackgroundColor3 = Color3.fromRGB(140, 60, 220)
+    border.BackgroundTransparency = 0.7
+    border.BorderSizePixel = 0
+    border.Parent = mainFrame
+    
+    local borderCorner = Instance.new("UICorner")
+    borderCorner.CornerRadius = UDim.new(0, 18)
+    borderCorner.Parent = border
+    
+    local glow = Instance.new("Frame")
+    glow.Size = UDim2.new(1, 20, 0, 2)
+    glow.Position = UDim2.new(0, -10, 0, 0)
+    glow.BackgroundColor3 = Color3.fromRGB(140, 60, 220)
+    glow.BackgroundTransparency = 0.4
+    glow.BorderSizePixel = 0
+    glow.Parent = mainFrame
+    
+    local glowCorner = Instance.new("UICorner")
+    glowCorner.CornerRadius = UDim.new(0, 10)
+    glowCorner.Parent = glow
+    
+    local titleFrame = Instance.new("Frame")
+    titleFrame.Size = UDim2.new(1, 0, 0, 35)
+    titleFrame.BackgroundColor3 = Color3.fromRGB(140, 60, 220)
+    titleFrame.BackgroundTransparency = 0.25
+    titleFrame.BorderSizePixel = 0
+    titleFrame.Parent = mainFrame
+    
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 18)
+    titleCorner.Parent = titleFrame
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, 0, 1, 0)
+    titleLabel.Position = UDim2.new(0, 0, 0, 0)
+    titleLabel.Text = "AUTO HUNTER"
+    titleLabel.TextColor3 = Color3.fromRGB(220, 180, 255)
+    titleLabel.TextScaled = true
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.TextStrokeColor3 = Color3.fromRGB(60, 20, 120)
+    titleLabel.TextStrokeTransparency = 0.5
+    titleLabel.Parent = titleFrame
+    
+    local statusFrame = Instance.new("Frame")
+    statusFrame.Size = UDim2.new(1, 0, 0, 30)
+    statusFrame.Position = UDim2.new(0, 0, 0, 40)
+    statusFrame.BackgroundColor3 = Color3.fromRGB(30, 12, 48)
+    statusFrame.BackgroundTransparency = 0.4
+    statusFrame.BorderSizePixel = 0
+    statusFrame.Parent = mainFrame
+    
+    local statusCorner = Instance.new("UICorner")
+    statusCorner.CornerRadius = UDim.new(0, 10)
+    statusCorner.Parent = statusFrame
+    
+    local statusLabel = Instance.new("TextLabel")
+    statusLabel.Size = UDim2.new(1, 0, 1, 0)
+    statusLabel.Text = "STATUS: OFF"
+    statusLabel.TextColor3 = Color3.fromRGB(220, 120, 120)
+    statusLabel.TextScaled = true
+    statusLabel.Font = Enum.Font.GothamBold
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.TextStrokeColor3 = Color3.fromRGB(80, 20, 20)
+    statusLabel.TextStrokeTransparency = 0.3
+    statusLabel.Parent = statusFrame
+    guiElements.statusLabel = statusLabel
+    
+    local infoFrame = Instance.new("Frame")
+    infoFrame.Size = UDim2.new(1, 0, 0, 30)
+    infoFrame.Position = UDim2.new(0, 0, 0, 75)
+    infoFrame.BackgroundColor3 = Color3.fromRGB(30, 12, 48)
+    infoFrame.BackgroundTransparency = 0.4
+    infoFrame.BorderSizePixel = 0
+    infoFrame.Parent = mainFrame
+    
+    local infoCorner = Instance.new("UICorner")
+    infoCorner.CornerRadius = UDim.new(0, 10)
+    infoCorner.Parent = infoFrame
+    
+    local infoLabel = Instance.new("TextLabel")
+    infoLabel.Size = UDim2.new(1, 0, 1, 0)
+    infoLabel.Text = "PRESS F TO TOGGLE"
+    infoLabel.TextColor3 = Color3.fromRGB(180, 140, 220)
+    infoLabel.TextScaled = true
+    infoLabel.Font = Enum.Font.GothamBold
+    infoLabel.BackgroundTransparency = 1
+    infoLabel.TextStrokeColor3 = Color3.fromRGB(60, 20, 100)
+    infoLabel.TextStrokeTransparency = 0.3
+    infoLabel.Parent = infoFrame
+    guiElements.infoLabel = infoLabel
+    
+    local buttonFrame = Instance.new("Frame")
+    buttonFrame.Size = UDim2.new(1, 0, 0, 30)
+    buttonFrame.Position = UDim2.new(0, 0, 0, 110)
+    buttonFrame.BackgroundColor3 = Color3.fromRGB(30, 12, 48)
+    buttonFrame.BackgroundTransparency = 0.4
+    buttonFrame.BorderSizePixel = 0
+    buttonFrame.Parent = mainFrame
+    
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 10)
+    buttonCorner.Parent = buttonFrame
+    
+    local resetButton = Instance.new("TextButton")
+    resetButton.Size = UDim2.new(0, 120, 1, 0)
+    resetButton.Position = UDim2.new(0.5, -60, 0, 0)
+    resetButton.Text = "RESET"
+    resetButton.TextColor3 = Color3.fromRGB(255, 200, 200)
+    resetButton.TextScaled = true
+    resetButton.Font = Enum.Font.GothamBold
+    resetButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+    resetButton.BackgroundTransparency = 0.3
+    resetButton.BorderSizePixel = 0
+    resetButton.Parent = buttonFrame
+    
+    local resetCorner = Instance.new("UICorner")
+    resetCorner.CornerRadius = UDim.new(0, 8)
+    resetCorner.Parent = resetButton
+    
+    resetButton.MouseButton1Click:Connect(function()
+        resetAll()
+    end)
+    
+    local toggleIndicator = Instance.new("Frame")
+    toggleIndicator.Size = UDim2.new(0, 80, 0, 28)
+    toggleIndicator.Position = UDim2.new(1, -95, 0, 4)
+    toggleIndicator.BackgroundColor3 = Color3.fromRGB(160, 50, 50)
+    toggleIndicator.BackgroundTransparency = 0.2
+    toggleIndicator.BorderSizePixel = 0
+    toggleIndicator.Parent = mainFrame
+    
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(0, 14)
+    toggleCorner.Parent = toggleIndicator
+    
+    local toggleBorder = Instance.new("Frame")
+    toggleBorder.Size = UDim2.new(1, 0, 1, 0)
+    toggleBorder.BackgroundColor3 = Color3.fromRGB(200, 80, 80)
+    toggleBorder.BackgroundTransparency = 0.5
+    toggleBorder.BorderSizePixel = 0
+    toggleBorder.Parent = toggleIndicator
+    
+    local toggleBorderCorner = Instance.new("UICorner")
+    toggleBorderCorner.CornerRadius = UDim.new(0, 14)
+    toggleBorderCorner.Parent = toggleBorder
+    
+    local toggleLabel = Instance.new("TextLabel")
+    toggleLabel.Size = UDim2.new(1, 0, 1, 0)
+    toggleLabel.Text = "OFF"
+    toggleLabel.TextColor3 = Color3.fromRGB(255, 180, 180)
+    toggleLabel.TextScaled = true
+    toggleLabel.Font = Enum.Font.GothamBold
+    toggleLabel.BackgroundTransparency = 1
+    toggleLabel.TextStrokeColor3 = Color3.fromRGB(120, 30, 30)
+    toggleLabel.TextStrokeTransparency = 0.3
+    toggleLabel.Parent = toggleIndicator
+    guiElements.toggleLabel = toggleLabel
+    guiElements.toggleIndicator = toggleIndicator
+    
+    coroutine.wrap(function()
+        while true do
+            task.wait(0.1)
+            if isFullyReset then
+                statusLabel.Text = "STATUS: RESET"
+                statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+                infoLabel.Text = "Fully reset, press F to start"
+                toggleLabel.Text = "OFF"
+                toggleIndicator.BackgroundColor3 = Color3.fromRGB(160, 50, 50)
+                toggleIndicator.BackgroundTransparency = 0.2
+                toggleBorder.BackgroundColor3 = Color3.fromRGB(200, 80, 80)
+                toggleLabel.TextColor3 = Color3.fromRGB(255, 180, 180)
+                mainFrame.BackgroundColor3 = Color3.fromRGB(18, 8, 28)
+                titleFrame.BackgroundColor3 = Color3.fromRGB(140, 60, 220)
+                titleLabel.TextColor3 = Color3.fromRGB(220, 180, 255)
+                glow.BackgroundColor3 = Color3.fromRGB(140, 60, 220)
+                border.BackgroundColor3 = Color3.fromRGB(140, 60, 220)
+                resetButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+            elseif isEnabled then
+                statusLabel.Text = "STATUS: ACTIVE"
+                statusLabel.TextColor3 = Color3.fromRGB(150, 255, 200)
+                infoLabel.Text = statusText
+                toggleLabel.Text = "ON"
+                toggleIndicator.BackgroundColor3 = Color3.fromRGB(80, 200, 120)
+                toggleIndicator.BackgroundTransparency = 0.2
+                toggleBorder.BackgroundColor3 = Color3.fromRGB(120, 255, 180)
+                toggleLabel.TextColor3 = Color3.fromRGB(180, 255, 220)
+                mainFrame.BackgroundColor3 = Color3.fromRGB(22, 10, 35)
+                titleFrame.BackgroundColor3 = Color3.fromRGB(120, 50, 200)
+                titleLabel.TextColor3 = Color3.fromRGB(220, 180, 255)
+                glow.BackgroundColor3 = Color3.fromRGB(120, 50, 200)
+                border.BackgroundColor3 = Color3.fromRGB(160, 80, 240)
+                resetButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+            else
+                statusLabel.Text = "STATUS: OFF"
+                statusLabel.TextColor3 = Color3.fromRGB(220, 120, 120)
+                infoLabel.Text = "PRESS F TO TOGGLE"
+                toggleLabel.Text = "OFF"
+                toggleIndicator.BackgroundColor3 = Color3.fromRGB(160, 50, 50)
+                toggleIndicator.BackgroundTransparency = 0.2
+                toggleBorder.BackgroundColor3 = Color3.fromRGB(200, 80, 80)
+                toggleLabel.TextColor3 = Color3.fromRGB(255, 180, 180)
+                mainFrame.BackgroundColor3 = Color3.fromRGB(18, 8, 28)
+                titleFrame.BackgroundColor3 = Color3.fromRGB(140, 60, 220)
+                titleLabel.TextColor3 = Color3.fromRGB(220, 180, 255)
+                glow.BackgroundColor3 = Color3.fromRGB(140, 60, 220)
+                border.BackgroundColor3 = Color3.fromRGB(140, 60, 220)
+                resetButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+            end
+        end
+    end)()
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.F then
+        if isFullyReset then
+            isFullyReset = false
+        end
+        
+        isEnabled = not isEnabled
+        
+        if isEnabled then
+            statusText = "Starting..."
+            targetLoop()
+            checkRespawn()
+            startTeleportLoop()
+        else
+            statusText = "Off"
+            currentTarget = nil
+            stopAutoClicker()
+            
+            if targetCoroutine then
+                coroutine.close(targetCoroutine)
+                targetCoroutine = nil
+            end
+            
+            if respawnCheckCoroutine then
+                coroutine.close(respawnCheckCoroutine)
+                respawnCheckCoroutine = nil
+            end
+            
+            if teleportCoroutine then
+                coroutine.close(teleportCoroutine)
+                teleportCoroutine = nil
+            end
+        end
+    end
+end)
+
+createStatusGUI()
