@@ -1,0 +1,1392 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
+
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+local camera = workspace.CurrentCamera
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SurislamClientUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 600, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(60, 60, 60)
+MainStroke.Thickness = 1
+MainStroke.Transparency = 0.5
+MainStroke.Parent = MainFrame
+
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 50)
+Header.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Header.BorderSizePixel = 0
+Header.Parent = MainFrame
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 12)
+HeaderCorner.Parent = Header
+
+local HeaderFix = Instance.new("Frame")
+HeaderFix.Size = UDim2.new(1, 0, 0, 15)
+HeaderFix.Position = UDim2.new(0, 0, 1, -15)
+HeaderFix.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+HeaderFix.BorderSizePixel = 0
+HeaderFix.Parent = Header
+
+local Logo = Instance.new("TextLabel")
+Logo.Size = UDim2.new(0, 30, 0, 30)
+Logo.Position = UDim2.new(0, 20, 0.5, -15)
+Logo.BackgroundTransparency = 1
+Logo.Text = "★"
+Logo.TextColor3 = Color3.fromRGB(255, 255, 255)
+Logo.TextSize = 26
+Logo.Font = Enum.Font.GothamBold
+Logo.Parent = Header
+
+local TitleSurislam = Instance.new("TextLabel")
+TitleSurislam.Size = UDim2.new(0, 100, 1, 0)
+TitleSurislam.Position = UDim2.new(0, 55, 0, 0)
+TitleSurislam.BackgroundTransparency = 1
+TitleSurislam.Text = "Surislam"
+TitleSurislam.TextColor3 = Color3.fromRGB(255, 50, 50)
+TitleSurislam.TextSize = 22
+TitleSurislam.Font = Enum.Font.GothamBold
+TitleSurislam.TextXAlignment = Enum.TextXAlignment.Left
+TitleSurislam.Parent = Header
+
+local TitleClient = Instance.new("TextLabel")
+TitleClient.Size = UDim2.new(0, 70, 1, 0)
+TitleClient.Position = UDim2.new(0, 140, 0, 0)
+TitleClient.BackgroundTransparency = 1
+TitleClient.Text = "Client"
+TitleClient.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleClient.TextSize = 22
+TitleClient.Font = Enum.Font.GothamBold
+TitleClient.TextXAlignment = Enum.TextXAlignment.Left
+TitleClient.Parent = Header
+
+local StatusDot = Instance.new("Frame")
+StatusDot.Size = UDim2.new(0, 8, 0, 8)
+StatusDot.Position = UDim2.new(0, 210, 0.5, -4)
+StatusDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+StatusDot.BorderSizePixel = 0
+StatusDot.Parent = Header
+
+local DotCorner = Instance.new("UICorner")
+DotCorner.CornerRadius = UDim.new(1, 0)
+DotCorner.Parent = StatusDot
+
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+MinimizeBtn.Position = UDim2.new(1, -85, 0.5, -15)
+MinimizeBtn.BackgroundTransparency = 1
+MinimizeBtn.Text = "−"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.TextSize = 22
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.Parent = Header
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 36, 0, 36)
+CloseBtn.Position = UDim2.new(1, -48, 0.5, -18)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Text = "×"
+CloseBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+CloseBtn.TextSize = 22
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = Header
+
+local FloatingBtn = Instance.new("TextButton")
+FloatingBtn.Size = UDim2.new(0, 50, 0, 50)
+FloatingBtn.Position = UDim2.new(0, 20, 1, -70)
+FloatingBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+FloatingBtn.BorderSizePixel = 0
+FloatingBtn.Text = ""
+FloatingBtn.Visible = false
+FloatingBtn.Parent = ScreenGui
+
+local FloatCorner = Instance.new("UICorner")
+FloatCorner.CornerRadius = UDim.new(0, 12)
+FloatCorner.Parent = FloatingBtn
+
+local FloatStroke = Instance.new("UIStroke")
+FloatStroke.Color = Color3.fromRGB(80, 80, 80)
+FloatStroke.Thickness = 1.5
+FloatStroke.Transparency = 0.3
+FloatStroke.Parent = FloatingBtn
+
+local FloatStar = Instance.new("TextLabel")
+FloatStar.Size = UDim2.new(1, 0, 1, 0)
+FloatStar.BackgroundTransparency = 1
+FloatStar.Text = "★"
+FloatStar.TextColor3 = Color3.fromRGB(255, 50, 50)
+FloatStar.TextSize = 28
+FloatStar.Font = Enum.Font.GothamBold
+FloatStar.Parent = FloatingBtn
+
+FloatingBtn.MouseEnter:Connect(function()
+    TweenService:Create(FloatingBtn, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {Size = UDim2.new(0, 56, 0, 56)}):Play()
+    TweenService:Create(FloatStroke, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {Color = Color3.fromRGB(255, 50, 50), Transparency = 0.1}):Play()
+end)
+
+FloatingBtn.MouseLeave:Connect(function()
+    TweenService:Create(FloatingBtn, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {Size = UDim2.new(0, 50, 0, 50)}):Play()
+    TweenService:Create(FloatStroke, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {Color = Color3.fromRGB(80, 80, 80), Transparency = 0.3}):Play()
+end)
+
+local draggingFloat = false
+local floatDragInput
+local floatMoved = false
+local floatStartPos
+
+FloatingBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingFloat = true
+        floatMoved = false
+        floatStartPos = input.Position
+        local startFrame = FloatingBtn.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingFloat = false
+            end
+        end)
+        local moveConn
+        moveConn = UserInputService.InputChanged:Connect(function(i)
+            if not draggingFloat then
+                moveConn:Disconnect()
+                return
+            end
+            if i.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = i.Position - floatStartPos
+                if math.abs(delta.X) > 5 or math.abs(delta.Y) > 5 then
+                    floatMoved = true
+                end
+                FloatingBtn.Position = UDim2.new(startFrame.X.Scale, startFrame.X.Offset + delta.X, startFrame.Y.Scale, startFrame.Y.Offset + delta.Y)
+            end
+        end)
+    end
+end)
+
+FloatingBtn.MouseButton1Click:Connect(function()
+    if not floatMoved then
+        FloatingBtn.Visible = false
+        MainFrame.Visible = true
+        MainFrame.Size = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 600, 0, 400)
+        }):Play()
+    end
+end)
+
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 160, 1, -50)
+Sidebar.Position = UDim2.new(0, 0, 0, 50)
+Sidebar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = MainFrame
+
+local Content = Instance.new("Frame")
+Content.Size = UDim2.new(1, -160, 1, -50)
+Content.Position = UDim2.new(0, 160, 0, 50)
+Content.BackgroundTransparency = 1
+Content.ClipsDescendants = true
+Content.Parent = MainFrame
+
+local Tabs = {}
+local Indicators = {}
+local Pages = {}
+local Toggles = {}
+local Inputs = {}
+local CurrentTab = "Player"
+
+local tabOrder = {"Player", "Visuals", "Locations", "Rake"}
+
+local function CreateTab(name, idx)
+    local tab = Instance.new("TextButton")
+    tab.Size = UDim2.new(1, -16, 0, 38)
+    tab.Position = UDim2.new(0, 8, 0, (idx - 1) * 44)
+    tab.BackgroundColor3 = idx == 1 and Color3.fromRGB(35, 35, 35) or Color3.fromRGB(25, 25, 25)
+    tab.BorderSizePixel = 0
+    tab.Text = "  " .. name
+    tab.TextColor3 = idx == 1 and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+    tab.TextSize = 15
+    tab.Font = Enum.Font.GothamMedium
+    tab.TextXAlignment = Enum.TextXAlignment.Left
+    tab.Parent = Sidebar
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = tab
+
+    local highlight = Instance.new("Frame")
+    highlight.Size = UDim2.new(1, 0, 1, 0)
+    highlight.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    highlight.BackgroundTransparency = 1
+    highlight.BorderSizePixel = 0
+    highlight.ZIndex = 0
+    highlight.Parent = tab
+
+    local highlightCorner = Instance.new("UICorner")
+    highlightCorner.CornerRadius = UDim.new(0, 8)
+    highlightCorner.Parent = highlight
+
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0, 3, 0.6, 0)
+    indicator.Position = UDim2.new(0, 0, 0.5, 0)
+    indicator.AnchorPoint = Vector2.new(0, 0.5)
+    indicator.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    indicator.BorderSizePixel = 0
+    indicator.Visible = idx == 1
+    indicator.Parent = tab
+
+    local indicatorCorner = Instance.new("UICorner")
+    indicatorCorner.CornerRadius = UDim.new(1, 0)
+    indicatorCorner.Parent = indicator
+
+    Tabs[name] = tab
+    Indicators[name] = indicator
+
+    tab.MouseEnter:Connect(function()
+        TweenService:Create(highlight, TweenInfo.new(0.35, Enum.EasingStyle.Sine), {BackgroundTransparency = 0.88}):Play()
+    end)
+    tab.MouseLeave:Connect(function()
+        TweenService:Create(highlight, TweenInfo.new(0.35, Enum.EasingStyle.Sine), {BackgroundTransparency = 1}):Play()
+    end)
+
+    return tab
+end
+
+local function CreatePage(name, idx)
+    local page = Instance.new("ScrollingFrame")
+    page.Name = name .. "Content"
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 4
+    page.ScrollBarImageColor3 = Color3.fromRGB(255, 50, 50)
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.Visible = idx == 1
+    page.Parent = Content
+    Pages[name] = page
+    return page
+end
+
+local function CreateSectionTitle(parent, text, yPos)
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -40, 0, 30)
+    title.Position = UDim2.new(0, 20, 0, yPos)
+    title.BackgroundTransparency = 1
+    title.Text = text
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextSize = 20
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = parent
+end
+
+local function CreateFunctionBlock(parent, name, yPos)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -40, 0, 50)
+    frame.Position = UDim2.new(0, 20, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = frame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(50, 50, 50)
+    stroke.Thickness = 1
+    stroke.Transparency = 0.7
+    stroke.Parent = frame
+
+    local funcName = Instance.new("TextLabel")
+    funcName.Size = UDim2.new(0.7, 0, 1, 0)
+    funcName.Position = UDim2.new(0, 20, 0, 0)
+    funcName.BackgroundTransparency = 1
+    funcName.Text = name
+    funcName.TextColor3 = Color3.fromRGB(220, 220, 220)
+    funcName.TextSize = 15
+    funcName.Font = Enum.Font.GothamMedium
+    funcName.TextXAlignment = Enum.TextXAlignment.Left
+    funcName.Parent = frame
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 50, 0, 26)
+    toggleBtn.Position = UDim2.new(1, -70, 0.5, -13)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    toggleBtn.BorderSizePixel = 0
+    toggleBtn.Text = ""
+    toggleBtn.Parent = frame
+
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(1, 0)
+    toggleCorner.Parent = toggleBtn
+
+    local toggleStroke = Instance.new("UIStroke")
+    toggleStroke.Color = Color3.fromRGB(60, 60, 60)
+    toggleStroke.Thickness = 1
+    toggleStroke.Transparency = 0.5
+    toggleStroke.Parent = toggleBtn
+
+    local toggleCircle = Instance.new("Frame")
+    toggleCircle.Size = UDim2.new(0, 20, 0, 20)
+    toggleCircle.Position = UDim2.new(0, 3, 0.5, -10)
+    toggleCircle.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+    toggleCircle.BorderSizePixel = 0
+    toggleCircle.Parent = toggleBtn
+
+    local circleCorner = Instance.new("UICorner")
+    circleCorner.CornerRadius = UDim.new(1, 0)
+    circleCorner.Parent = toggleCircle
+
+    frame.MouseEnter:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {BackgroundColor3 = Color3.fromRGB(32, 32, 32)}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {Color = Color3.fromRGB(255, 50, 50), Transparency = 0.3}):Play()
+        TweenService:Create(funcName, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    end)
+
+    frame.MouseLeave:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {BackgroundColor3 = Color3.fromRGB(25, 25, 25)}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {Color = Color3.fromRGB(50, 50, 50), Transparency = 0.7}):Play()
+        TweenService:Create(funcName, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {TextColor3 = Color3.fromRGB(220, 220, 220)}):Play()
+    end)
+
+    Toggles[name] = {btn = toggleBtn, stroke = toggleStroke, circle = toggleCircle, state = false}
+    return frame, toggleBtn, toggleStroke, toggleCircle
+end
+
+local function UpdateToggleByName(name, state)
+    local t = Toggles[name]
+    if not t then return end
+    t.state = state
+    if state then
+        TweenService:Create(t.btn, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {BackgroundColor3 = Color3.fromRGB(255, 50, 50)}):Play()
+        TweenService:Create(t.stroke, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {Color = Color3.fromRGB(255, 50, 50)}):Play()
+        TweenService:Create(t.circle, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {Position = UDim2.new(1, -23, 0.5, -10), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    else
+        TweenService:Create(t.btn, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+        TweenService:Create(t.stroke, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {Color = Color3.fromRGB(60, 60, 60)}):Play()
+        TweenService:Create(t.circle, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {Position = UDim2.new(0, 3, 0.5, -10), BackgroundColor3 = Color3.fromRGB(180, 180, 180)}):Play()
+    end
+end
+
+local function CreateInput(parent, name, yPos, minVal, maxVal, defaultVal, suffix, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -40, 0, 65)
+    frame.Position = UDim2.new(0, 20, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = frame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(50, 50, 50)
+    stroke.Thickness = 1
+    stroke.Transparency = 0.7
+    stroke.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -30, 0, 28)
+    label.Position = UDim2.new(0, 15, 0, 5)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextSize = 15
+    label.Font = Enum.Font.GothamMedium
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local inputBox = Instance.new("Frame")
+    inputBox.Size = UDim2.new(0, 120, 0, 24)
+    inputBox.Position = UDim2.new(0, 15, 0, 35)
+    inputBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    inputBox.BorderSizePixel = 0
+    inputBox.Parent = frame
+
+    local inputCorner = Instance.new("UICorner")
+    inputCorner.CornerRadius = UDim.new(0, 6)
+    inputCorner.Parent = inputBox
+
+    local inputStroke = Instance.new("UIStroke")
+    inputStroke.Color = Color3.fromRGB(60, 60, 60)
+    inputStroke.Thickness = 1
+    inputStroke.Transparency = 0.5
+    inputStroke.Parent = inputBox
+
+    local textBox = Instance.new("TextBox")
+    textBox.Size = UDim2.new(1, 0, 1, 0)
+    textBox.BackgroundTransparency = 1
+    textBox.Text = tostring(defaultVal)
+    textBox.TextColor3 = Color3.fromRGB(255, 50, 50)
+    textBox.TextSize = 14
+    textBox.Font = Enum.Font.GothamBold
+    textBox.ClearTextOnFocus = false
+    textBox.Parent = inputBox
+
+    if suffix and suffix ~= "" then
+        local suffixLabel = Instance.new("TextLabel")
+        suffixLabel.Size = UDim2.new(0, 200, 0, 24)
+        suffixLabel.Position = UDim2.new(0, 145, 0, 35)
+        suffixLabel.BackgroundTransparency = 1
+        suffixLabel.Text = suffix
+        suffixLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+        suffixLabel.TextSize = 13
+        suffixLabel.Font = Enum.Font.Gotham
+        suffixLabel.TextXAlignment = Enum.TextXAlignment.Left
+        suffixLabel.Parent = frame
+    end
+
+    local currentValue = defaultVal
+
+    textBox.FocusLost:Connect(function()
+        local val = tonumber(textBox.Text)
+        if val then
+            val = math.clamp(val, minVal, maxVal)
+            textBox.Text = tostring(val)
+            currentValue = val
+            pcall(callback, val)
+        else
+            textBox.Text = tostring(currentValue)
+        end
+    end)
+
+    inputBox.MouseEnter:Connect(function()
+        TweenService:Create(inputStroke, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {Color = Color3.fromRGB(255, 50, 50), Transparency = 0.2}):Play()
+    end)
+    inputBox.MouseLeave:Connect(function()
+        TweenService:Create(inputStroke, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {Color = Color3.fromRGB(60, 60, 60), Transparency = 0.5}):Play()
+    end)
+
+    pcall(callback, defaultVal)
+    Inputs[name] = frame
+end
+
+local function isSameTeam(plr)
+    if player.Team and plr.Team then
+        return player.Team == plr.Team
+    end
+    return false
+end
+
+local function Message(title, text, time)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = text,
+            Duration = time or 5
+        })
+    end)
+end
+
+for i, name in ipairs(tabOrder) do
+    CreateTab(name, i)
+    CreatePage(name, i)
+end
+
+local State = {
+    InfiniteJump = false,
+    Noclip = false,
+    Fullbright = false,
+    Speedhack = false,
+    SpeedValue = 16,
+    ESP = false,
+    ESPTeamCheck = false,
+    ShowNames = false,
+    ShowHealth = false,
+    ShowDistance = false,
+    OutlineGlow = false,
+    ShowSkeleton = false,
+    ShowRake = false,
+}
+
+local Connections = {
+    Noclip = nil,
+    Fullbright = nil,
+}
+
+local ClipFlag = false
+
+local function applySpeed()
+    if player.Character then
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = State.Speedhack and State.SpeedValue or 16
+        end
+    end
+end
+
+local function noclip()
+    ClipFlag = false
+    Connections.Noclip = RunService.Stepped:Connect(function()
+        if not ClipFlag and player.Character then
+            for _, v in pairs(player.Character:GetDescendants()) do
+                if v:IsA('BasePart') and v.CanCollide then
+                    v.CanCollide = false
+                end
+            end
+        end
+        task.wait(0.1)
+    end)
+end
+
+local function clip()
+    if Connections.Noclip then
+        Connections.Noclip:Disconnect()
+        Connections.Noclip = nil
+    end
+    ClipFlag = true
+    if player.Character then
+        for _, v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = true
+            end
+        end
+    end
+end
+
+local function applyFullbright()
+    if not player.Character then return end
+    local head = player.Character:FindFirstChild("Head")
+    if not head then return end
+    local existing = head:FindFirstChild("SurislamClientFullbright")
+    if existing then existing:Destroy() end
+    local light = Instance.new("PointLight")
+    light.Name = "SurislamClientFullbright"
+    light.Brightness = 1.5
+    light.Range = 60
+    light.Color = Color3.fromRGB(255, 255, 255)
+    light.Shadows = false
+    light.Parent = head
+end
+
+local function removeFullbright()
+    if not player.Character then return end
+    local head = player.Character:FindFirstChild("Head")
+    if not head then return end
+    local light = head:FindFirstChild("SurislamClientFullbright")
+    if light then light:Destroy() end
+end
+
+local function startFullbright()
+    applyFullbright()
+    Connections.Fullbright = player.CharacterAdded:Connect(function()
+        task.wait(1)
+        if State.Fullbright then applyFullbright() end
+    end)
+end
+
+local function stopFullbright()
+    if Connections.Fullbright then
+        Connections.Fullbright:Disconnect()
+        Connections.Fullbright = nil
+    end
+    removeFullbright()
+end
+
+player.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid", 5)
+    task.wait(0.1)
+    applySpeed()
+end)
+
+task.spawn(function()
+    while task.wait(0.25) do
+        if player.Character then
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                if State.Speedhack then
+                    if humanoid.WalkSpeed ~= State.SpeedValue then humanoid.WalkSpeed = State.SpeedValue end
+                else
+                    if humanoid.WalkSpeed ~= 16 then humanoid.WalkSpeed = 16 end
+                end
+            end
+        end
+    end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if State.InfiniteJump and player.Character then
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+local playerPage = Pages["Player"]
+CreateSectionTitle(playerPage, "Player", 20)
+local py = 65
+
+CreateFunctionBlock(playerPage, "Infinite Jump", py)
+py = py + 60
+
+CreateFunctionBlock(playerPage, "Noclip", py)
+py = py + 60
+
+CreateFunctionBlock(playerPage, "Fullbright", py)
+py = py + 60
+
+CreateFunctionBlock(playerPage, "Speedhack", py)
+py = py + 60
+
+CreateInput(playerPage, "Speed Value", py, 0, 10000, 16, "studs", function(v) State.SpeedValue = v; if State.Speedhack then applySpeed() end end)
+py = py + 70
+
+playerPage.CanvasSize = UDim2.new(0, 0, 0, py + 10)
+
+local visualsPage = Pages["Visuals"]
+CreateSectionTitle(visualsPage, "Visuals", 20)
+local vy = 65
+
+CreateFunctionBlock(visualsPage, "ESP Enabled", vy)
+vy = vy + 60
+
+CreateFunctionBlock(visualsPage, "ESP Team Check", vy)
+vy = vy + 60
+
+CreateFunctionBlock(visualsPage, "Show Names", vy)
+vy = vy + 60
+
+CreateFunctionBlock(visualsPage, "Show Health", vy)
+vy = vy + 60
+
+CreateFunctionBlock(visualsPage, "Show Distance", vy)
+vy = vy + 60
+
+CreateFunctionBlock(visualsPage, "Outline Glow", vy)
+vy = vy + 60
+
+CreateFunctionBlock(visualsPage, "Show Skeleton", vy)
+vy = vy + 60
+
+visualsPage.CanvasSize = UDim2.new(0, 0, 0, vy + 10)
+
+-- ===== Locations =====
+local locationsPage = Pages["Locations"]
+CreateSectionTitle(locationsPage, "Locations", 20)
+local ly = 65
+
+local LOCATION_NAMES = {
+    {key = "Show BaseCamp", folder = "BaseCamp", label = "BaseCamp"},
+    {key = "Show ObservationTower", folder = "ObservationTower", label = "ObservationTower"},
+    {key = "Show PowerStation", folder = "PowerStation", label = "PowerStation"},
+    {key = "Show SafeHouse", folder = "SafeHouse", label = "SafeHouse"},
+}
+
+for _, loc in ipairs(LOCATION_NAMES) do
+    CreateFunctionBlock(locationsPage, loc.key, ly)
+    ly = ly + 60
+end
+
+locationsPage.CanvasSize = UDim2.new(0, 0, 0, ly + 10)
+
+-- Location ESP storage
+local locationHighlights = {}
+local locationBillboards = {}
+
+local function GetMapFolder()
+    return workspace:FindFirstChild("Map")
+end
+
+local function GetLocationFolder(folderName)
+    local map = GetMapFolder()
+    if not map then return nil end
+    return map:FindFirstChild(folderName)
+end
+
+local function GetLocationCenter(folder)
+    if folder:IsA("Model") and folder.PrimaryPart then
+        return folder.PrimaryPart.Position
+    end
+    local parts = {}
+    for _, d in ipairs(folder:GetDescendants()) do
+        if d:IsA("BasePart") then
+            table.insert(parts, d)
+        end
+    end
+    if #parts == 0 then return nil end
+    local sum = Vector3.new(0, 0, 0)
+    for _, p in ipairs(parts) do
+        sum = sum + p.Position
+    end
+    return sum / #parts
+end
+
+local function CreateLocationBillboard(folderName, labelText, adorneePart)
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "SurislamLoc_" .. folderName
+    bb.Size = UDim2.new(0, 220, 0, 40)
+    bb.StudsOffset = Vector3.new(0, 4, 0)
+    bb.AlwaysOnTop = true
+    bb.ResetOnSpawn = false
+    bb.Parent = ScreenGui
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = labelText
+    lbl.TextColor3 = Color3.fromRGB(255, 50, 50)
+    lbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    lbl.TextStrokeTransparency = 0.2
+    lbl.TextSize = 18
+    lbl.Font = Enum.Font.GothamBold
+    lbl.Parent = bb
+
+    bb.Adornee = adorneePart
+    locationBillboards[folderName] = bb
+end
+
+local function EnableLocation(folderName, labelText)
+    local folder = GetLocationFolder(folderName)
+    if not folder then
+        Message("Location", folderName .. " not found in Workspace.Map", 3)
+        return
+    end
+
+    if locationHighlights[folderName] then
+        locationHighlights[folderName]:Destroy()
+        locationHighlights[folderName] = nil
+    end
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "SurislamLocHL_" .. folderName
+    hl.Adornee = folder
+    hl.FillTransparency = 1
+    hl.OutlineColor = Color3.fromRGB(255, 50, 50)
+    hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Parent = ScreenGui
+    locationHighlights[folderName] = hl
+
+    local center = GetLocationCenter(folder)
+    if center then
+        local anchor = Instance.new("Part")
+        anchor.Name = "SurislamLocAnchor_" .. folderName
+        anchor.Anchored = true
+        anchor.CanCollide = false
+        anchor.Transparency = 1
+        anchor.Size = Vector3.new(1, 1, 1)
+        anchor.CFrame = CFrame.new(center)
+        anchor.Parent = ScreenGui
+
+        CreateLocationBillboard(folderName, labelText, anchor)
+    elseif folder:IsA("Model") and folder.PrimaryPart then
+        CreateLocationBillboard(folderName, labelText, folder.PrimaryPart)
+    end
+end
+
+local function DisableLocation(folderName)
+    if locationHighlights[folderName] then
+        locationHighlights[folderName]:Destroy()
+        locationHighlights[folderName] = nil
+    end
+    if locationBillboards[folderName] then
+        locationBillboards[folderName]:Destroy()
+        locationBillboards[folderName] = nil
+    end
+    for _, child in ipairs(ScreenGui:GetChildren()) do
+        if child.Name == "SurislamLocAnchor_" .. folderName then
+            child:Destroy()
+        end
+    end
+end
+
+local function DisableAllLocations()
+    for name, _ in pairs(locationHighlights) do
+        DisableLocation(name)
+    end
+    for name, _ in pairs(locationBillboards) do
+        DisableLocation(name)
+    end
+end
+
+-- ===== Rake =====
+local rakePage = Pages["Rake"]
+CreateSectionTitle(rakePage, "Rake", 20)
+local ry = 65
+
+CreateFunctionBlock(rakePage, "Show Rake", ry)
+ry = ry + 60
+
+rakePage.CanvasSize = UDim2.new(0, 0, 0, ry + 10)
+
+-- Rake ESP variables
+local RAKE_TARGET_NAME = "Rake"
+local RAKE_OUTLINE_COLOR = Color3.new(1, 1, 1)
+local RAKE_TEXT_COLOR = Color3.new(1, 1, 1)
+local RAKE_TEXT_SIZE = 16
+local RAKE_UPDATE_RATE = 0.1
+
+local rakeEspCache = {}
+local rakeConnection = nil
+local rakeAccumulator = 0
+
+local function createRakeESP(model)
+    if not model or not model:IsA("Model") then return end
+    if rakeEspCache[model] then return end
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "RakeESP_Highlight"
+    highlight.Adornee = model
+    highlight.FillTransparency = 1
+    highlight.OutlineColor = RAKE_OUTLINE_COLOR
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Parent = model
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "RakeESP_Label"
+    billboard.Adornee = model
+    billboard.Size = UDim2.new(0, 200, 0, 60)
+    billboard.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+    billboard.LightInfluence = 0
+    billboard.MaxDistance = math.huge
+    billboard.Parent = model
+
+    local container = Instance.new("Frame")
+    container.Name = "Container"
+    container.Size = UDim2.new(1, 0, 1, 0)
+    container.BackgroundTransparency = 1
+    container.Parent = billboard
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "NameLabel"
+    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    nameLabel.Position = UDim2.new(0, 0, 0, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = "Rake"
+    nameLabel.TextColor3 = RAKE_TEXT_COLOR
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+    nameLabel.TextScaled = false
+    nameLabel.TextSize = RAKE_TEXT_SIZE
+    nameLabel.Font = Enum.Font.SourceSansBold
+    nameLabel.Parent = container
+
+    local distLabel = Instance.new("TextLabel")
+    distLabel.Name = "DistLabel"
+    distLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    distLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    distLabel.BackgroundTransparency = 1
+    distLabel.Text = "0 studs"
+    distLabel.TextColor3 = RAKE_TEXT_COLOR
+    distLabel.TextStrokeTransparency = 0
+    distLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+    distLabel.TextScaled = false
+    distLabel.TextSize = RAKE_TEXT_SIZE
+    distLabel.Font = Enum.Font.SourceSansBold
+    distLabel.Parent = container
+
+    rakeEspCache[model] = { highlight = highlight, billboard = billboard, distLabel = distLabel }
+
+    model.AncestryChanged:Connect(function(_, parent)
+        if not parent then
+            if rakeEspCache[model] then
+                if rakeEspCache[model].highlight then
+                    rakeEspCache[model].highlight:Destroy()
+                end
+                if rakeEspCache[model].billboard then
+                    rakeEspCache[model].billboard:Destroy()
+                end
+                rakeEspCache[model] = nil
+            end
+        end
+    end)
+end
+
+local function scanForRake()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj.Name == RAKE_TARGET_NAME then
+            createRakeESP(obj)
+        end
+    end
+end
+
+local function getRakeModelPosition(model)
+    local ok, pos = pcall(function()
+        return model:GetPivot().Position
+    end)
+    if ok and pos then return pos end
+
+    local primary = model.PrimaryPart
+    if primary then return primary.Position end
+
+    local anyPart = model:FindFirstChildWhichIsA("BasePart", true)
+    if anyPart then return anyPart.Position end
+
+    return nil
+end
+
+local function clearAllRakeESP()
+    for model, data in pairs(rakeEspCache) do
+        if data.highlight then pcall(function() data.highlight:Destroy() end) end
+        if data.billboard then pcall(function() data.billboard:Destroy() end) end
+        rakeEspCache[model] = nil
+    end
+    rakeEspCache = {}
+end
+
+local function startRakeESP()
+    if rakeConnection then return end
+    rakeAccumulator = 0
+    rakeConnection = RunService.Heartbeat:Connect(function(dt)
+        if not State.ShowRake then return end
+        rakeAccumulator = rakeAccumulator + dt
+        if rakeAccumulator >= RAKE_UPDATE_RATE then
+            rakeAccumulator = 0
+            scanForRake()
+
+            local char = player.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root then
+                local myPos = root.Position
+                for model, data in pairs(rakeEspCache) do
+                    if data.distLabel and data.distLabel.Parent then
+                        local pos = getRakeModelPosition(model)
+                        if pos then
+                            local dist = (pos - myPos).Magnitude
+                            data.distLabel.Text = string.format("%d studs", math.floor(dist + 0.5))
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
+local function stopRakeESP()
+    if rakeConnection then
+        rakeConnection:Disconnect()
+        rakeConnection = nil
+    end
+    clearAllRakeESP()
+end
+
+-- ===== ESP code =====
+local hasDrawing = false
+pcall(function()
+    local test = Drawing.new("Circle")
+    test:Remove()
+    hasDrawing = true
+end)
+
+local espHolder = Instance.new("Folder")
+espHolder.Name = "SurislamClientESP"
+espHolder.Parent = ScreenGui
+
+local espLabels = {}
+local outlineHighlights = {}
+local skeletonDrawings = {}
+
+local SKELETON_CONNECTIONS = {
+    {"Head", "UpperTorso"},
+    {"UpperTorso", "LowerTorso"},
+    {"UpperTorso", "LeftUpperArm"},
+    {"LeftUpperArm", "LeftLowerArm"},
+    {"UpperTorso", "RightUpperArm"},
+    {"RightUpperArm", "RightLowerArm"},
+    {"LowerTorso", "LeftUpperLeg"},
+    {"LeftUpperLeg", "LeftLowerLeg"},
+    {"LowerTorso", "RightUpperLeg"},
+    {"RightUpperLeg", "RightLowerLeg"}
+}
+
+local function CreateESP(plr)
+    local esp = Instance.new("BillboardGui")
+    esp.Name = plr.Name
+    esp.Parent = espHolder
+    esp.Size = UDim2.new(0, 250, 0, 50)
+    esp.StudsOffset = Vector3.new(0, 2.5, 0)
+    esp.AlwaysOnTop = true
+    esp.Enabled = false
+    esp.ResetOnSpawn = false
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Parent = esp
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    nameLabel.Position = UDim2.new(0, 0, 0, -2)
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextStrokeTransparency = 0.2
+    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    nameLabel.TextSize = 16
+    nameLabel.ZIndex = 2
+
+    local infoLabel = Instance.new("TextLabel")
+    infoLabel.Parent = esp
+    infoLabel.BackgroundTransparency = 1
+    infoLabel.Position = UDim2.new(0, 0, 0.5, 2)
+    infoLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    infoLabel.Font = Enum.Font.GothamBold
+    infoLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+    infoLabel.TextStrokeTransparency = 0.2
+    infoLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    infoLabel.TextSize = 14
+    infoLabel.ZIndex = 2
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = plr.Name .. "Outline"
+    highlight.Parent = espHolder
+    highlight.FillTransparency = 1
+    highlight.OutlineColor = Color3.fromRGB(255, 50, 50)
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Enabled = false
+
+    table.insert(outlineHighlights, {plr = plr, highlight = highlight})
+    table.insert(espLabels, {plr = plr, gui = esp, name = nameLabel, info = infoLabel})
+end
+
+local function clearSkeletonForPlayer(plr)
+    local drawings = skeletonDrawings[plr]
+    if drawings then
+        for _, d in ipairs(drawings) do
+            pcall(function() d.Visible = false; d:Remove() end)
+        end
+        skeletonDrawings[plr] = nil
+    end
+end
+
+local function clearAllSkeletons()
+    for plr, _ in pairs(skeletonDrawings) do
+        clearSkeletonForPlayer(plr)
+    end
+end
+
+local function drawSkeletonForPlayer(plr)
+    if not hasDrawing then return end
+    clearSkeletonForPlayer(plr)
+    if not plr.Character then return end
+    local drawings = {}
+    for _, conn in ipairs(SKELETON_CONNECTIONS) do
+        local part1 = plr.Character:FindFirstChild(conn[1])
+        local part2 = plr.Character:FindFirstChild(conn[2])
+        if part1 and part2 then
+            local pos1, on1 = camera:WorldToViewportPoint(part1.Position)
+            local pos2, on2 = camera:WorldToViewportPoint(part2.Position)
+            if on1 and on2 then
+                local ok, line = pcall(function()
+                    local l = Drawing.new("Line")
+                    l.From = Vector2.new(pos1.X, pos1.Y)
+                    l.To = Vector2.new(pos2.X, pos2.Y)
+                    l.Thickness = 2
+                    l.Color = Color3.fromRGB(255, 50, 50)
+                    l.Transparency = 0.8
+                    l.Visible = true
+                    return l
+                end)
+                if ok and line then table.insert(drawings, line) end
+            end
+        end
+    end
+    local head = plr.Character:FindFirstChild("Head")
+    if head then
+        local hp, on = camera:WorldToViewportPoint(head.Position)
+        if on then
+            local ok, circle = pcall(function()
+                local c = Drawing.new("Circle")
+                c.Position = Vector2.new(hp.X, hp.Y - 15)
+                c.Radius = 10
+                c.Thickness = 2
+                c.Color = Color3.fromRGB(255, 50, 50)
+                c.Filled = false
+                c.NumSides = 16
+                c.Visible = true
+                return c
+            end)
+            if ok and circle then table.insert(drawings, circle) end
+        end
+    end
+    skeletonDrawings[plr] = drawings
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    if plr ~= player then CreateESP(plr) end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+    if plr ~= player then CreateESP(plr) end
+end)
+
+Players.PlayerRemoving:Connect(function(plr)
+    if skeletonDrawings[plr] then clearSkeletonForPlayer(plr) end
+    for i, data in ipairs(espLabels) do
+        if data.plr == plr then
+            data.gui:Destroy()
+            table.remove(espLabels, i)
+            break
+        end
+    end
+    for i, data in ipairs(outlineHighlights) do
+        if data.plr == plr then
+            data.highlight:Destroy()
+            table.remove(outlineHighlights, i)
+            break
+        end
+    end
+end)
+
+local skeletonUpdateCounter = 0
+local SKELETON_UPDATE_RATE = 3
+
+RunService.RenderStepped:Connect(function(dt)
+    skeletonUpdateCounter = skeletonUpdateCounter + 1
+    local shouldUpdate = skeletonUpdateCounter >= SKELETON_UPDATE_RATE
+
+    for _, data in ipairs(espLabels) do
+        local plr = data.plr
+        local gui = data.gui
+        local isTeam = State.ESPTeamCheck and isSameTeam(plr)
+
+        if plr and plr.Character and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChildOfClass("Humanoid") and not isTeam then
+            local head = plr.Character.Head
+            local humanoid = plr.Character.Humanoid
+            gui.Adornee = head
+
+            if State.ESP then
+                local showAny = false
+                local infoText = ""
+                if State.ShowNames then
+                    data.name.Text = plr.Name
+                    data.name.Visible = true
+                    showAny = true
+                else
+                    data.name.Visible = false
+                end
+                if State.ShowHealth then
+                    infoText = math.floor(humanoid.Health) .. " HP"
+                end
+                if State.ShowDistance then
+                    if infoText ~= "" then infoText = infoText .. " | " end
+                    infoText = infoText .. math.floor((head.Position - camera.CFrame.Position).Magnitude) .. "m"
+                end
+                data.info.Text = infoText
+                data.info.Visible = infoText ~= ""
+                if infoText ~= "" then showAny = true end
+                gui.Enabled = showAny
+            else
+                gui.Enabled = false
+            end
+
+            for _, o in ipairs(outlineHighlights) do
+                if o.plr == plr then
+                    if State.ESP and State.OutlineGlow and not isTeam then
+                        o.highlight.Adornee = plr.Character
+                        o.highlight.Enabled = true
+                    else
+                        o.highlight.Enabled = false
+                    end
+                end
+            end
+
+            if State.ESP and State.ShowSkeleton and not isTeam then
+                if shouldUpdate then drawSkeletonForPlayer(plr) end
+            else
+                if skeletonDrawings[plr] then clearSkeletonForPlayer(plr) end
+            end
+        else
+            gui.Enabled = false
+            for _, o in ipairs(outlineHighlights) do
+                if o.plr == plr then o.highlight.Enabled = false end
+            end
+            if skeletonDrawings[plr] then clearSkeletonForPlayer(plr) end
+        end
+    end
+
+    if shouldUpdate then skeletonUpdateCounter = 0 end
+    if not State.ESP or not State.ShowSkeleton then clearAllSkeletons() end
+end)
+
+local function SwitchTab(newTab)
+    if CurrentTab == newTab then return end
+    CurrentTab = newTab
+
+    for name, tab in pairs(Tabs) do
+        if name == newTab then
+            TweenService:Create(tab, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {BackgroundColor3 = Color3.fromRGB(35, 35, 35)}):Play()
+            TweenService:Create(tab, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            local ind = Indicators[name]
+            ind.Visible = true
+            ind.Size = UDim2.new(0, 0, 0.6, 0)
+            TweenService:Create(ind, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 3, 0.6, 0)}):Play()
+            Pages[name].Visible = true
+            Pages[name].Position = UDim2.new(0, 30, 0, 0)
+            TweenService:Create(Pages[name], TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+        else
+            TweenService:Create(tab, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {BackgroundColor3 = Color3.fromRGB(25, 25, 25)}):Play()
+            TweenService:Create(tab, TweenInfo.new(0.4, Enum.EasingStyle.Sine), {TextColor3 = Color3.fromRGB(180, 180, 180)}):Play()
+            Indicators[name].Visible = false
+            Pages[name].Visible = false
+        end
+    end
+end
+
+for name, tab in pairs(Tabs) do
+    tab.MouseButton1Click:Connect(function()
+        SwitchTab(name)
+    end)
+end
+
+local toggleCallbacks = {
+    ["Infinite Jump"] = function(s) State.InfiniteJump = s end,
+    ["Noclip"] = function(s) State.Noclip = s; if s then noclip() else clip() end end,
+    ["Fullbright"] = function(s) State.Fullbright = s; if s then startFullbright() else stopFullbright() end end,
+    ["Speedhack"] = function(s) State.Speedhack = s; applySpeed() end,
+    ["ESP Enabled"] = function(s) State.ESP = s end,
+    ["ESP Team Check"] = function(s) State.ESPTeamCheck = s end,
+    ["Show Names"] = function(s) State.ShowNames = s end,
+    ["Show Health"] = function(s) State.ShowHealth = s end,
+    ["Show Distance"] = function(s) State.ShowDistance = s end,
+    ["Outline Glow"] = function(s) State.OutlineGlow = s end,
+    ["Show Skeleton"] = function(s) State.ShowSkeleton = s end,
+    ["Show BaseCamp"] = function(s)
+        if s then EnableLocation("BaseCamp", "BaseCamp") else DisableLocation("BaseCamp") end
+    end,
+    ["Show ObservationTower"] = function(s)
+        if s then EnableLocation("ObservationTower", "ObservationTower") else DisableLocation("ObservationTower") end
+    end,
+    ["Show PowerStation"] = function(s)
+        if s then EnableLocation("PowerStation", "PowerStation") else DisableLocation("PowerStation") end
+    end,
+    ["Show SafeHouse"] = function(s)
+        if s then EnableLocation("SafeHouse", "SafeHouse") else DisableLocation("SafeHouse") end
+    end,
+    ["Show Rake"] = function(s)
+        State.ShowRake = s
+        if s then startRakeESP() else stopRakeESP() end
+    end,
+}
+
+for name, data in pairs(Toggles) do
+    data.btn.MouseButton1Click:Connect(function()
+        local newState = not data.state
+        UpdateToggleByName(name, newState)
+        local cb = toggleCallbacks[name]
+        if cb then cb(newState) end
+    end)
+end
+
+local dragging = false
+local dragInput
+local mousePos
+local framePos
+
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        mousePos = input.Position
+        framePos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+Header.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - mousePos
+        MainFrame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+    end
+end)
+
+MinimizeBtn.MouseButton1Click:Connect(function()
+    TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0)
+    }):Play()
+    task.wait(0.4)
+    MainFrame.Visible = false
+    FloatingBtn.Visible = true
+    FloatingBtn.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(FloatingBtn, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 50, 0, 50)
+    }):Play()
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    State.InfiniteJump = false
+    State.Noclip = false
+    State.Fullbright = false
+    State.Speedhack = false
+    State.ESP = false
+    State.ShowSkeleton = false
+    State.ShowRake = false
+
+    if Connections.Noclip then Connections.Noclip:Disconnect() Connections.Noclip = nil end
+    if Connections.Fullbright then Connections.Fullbright:Disconnect() Connections.Fullbright = nil end
+
+    stopRakeESP()
+
+    ClipFlag = true
+    if player.Character then
+        for _, v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = true
+            end
+        end
+    end
+
+    if player.Character then
+        local head = player.Character:FindFirstChild("Head")
+        if head then
+            local light = head:FindFirstChild("SurislamClientFullbright")
+            if light then light:Destroy() end
+        end
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = 16
+        end
+    end
+
+    clearAllSkeletons()
+    DisableAllLocations()
+
+    for _, data in ipairs(espLabels) do
+        pcall(function() data.gui:Destroy() end)
+    end
+    espLabels = {}
+
+    for _, data in ipairs(outlineHighlights) do
+        pcall(function() data.highlight:Destroy() end)
+    end
+    outlineHighlights = {}
+
+    if espHolder then
+        espHolder:Destroy()
+        espHolder = nil
+    end
+
+    ScreenGui:Destroy()
+end)
