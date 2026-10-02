@@ -1,0 +1,254 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local LP = Players.LocalPlayer
+
+local VER_OUTLINE = Color3.fromRGB(255, 30, 60)
+local VER_TEXT = Color3.fromRGB(255, 255, 255)
+local VER_TEXT_LABEL = "MONOCHROME"
+local PLAYER_COLOR = Color3.fromRGB(0, 255, 100)
+local LIGHT_RADIUS = 60
+local LIGHT_BRIGHTNESS = 1
+local MAX_DISTANCE = 2000
+
+local verHighlights = {}
+local verBillboards = {}
+local verLights = {}
+local playerHighlights = {}
+local playerBillboards = {}
+local playerLights = {}
+
+local function makeLabel(parent, name, pos, size, color, font, text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Name = name
+    lbl.Size = size
+    lbl.Position = pos
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = color
+    lbl.TextStrokeTransparency = 1
+    lbl.TextScaled = false
+    lbl.TextSize = 14
+    lbl.Font = font
+    lbl.Text = text
+    lbl.Parent = parent
+    return lbl
+end
+
+local function createVERLight(model)
+    if verLights[model] then return end
+    local root = model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+    if not root then return end
+    local light = Instance.new("PointLight")
+    light.Name = "VERLight"
+    light.Brightness = LIGHT_BRIGHTNESS
+    light.Range = LIGHT_RADIUS
+    light.Color = Color3.fromRGB(255, 255, 255)
+    light.Shadows = true
+    light.Parent = root
+    verLights[model] = light
+end
+
+local function createVERHighlight(model)
+    if not model or not model:IsA("Model") then return end
+    if verHighlights[model] then return end
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "VERHighlight"
+    hl.FillColor = VER_OUTLINE
+    hl.FillTransparency = 1
+    hl.OutlineColor = VER_OUTLINE
+    hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Adornee = model
+    hl.Parent = model
+    verHighlights[model] = hl
+
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "VERBillboard"
+    bb.Size = UDim2.new(0, 140, 0, 34)
+    bb.StudsOffsetWorldSpace = Vector3.new(0, 3.2, 0)
+    bb.AlwaysOnTop = true
+    bb.MaxDistance = MAX_DISTANCE
+    bb.LightInfluence = 0
+    bb.ResetOnSpawn = false
+    bb.Parent = model
+
+    makeLabel(bb, "NameLabel", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 18), VER_TEXT, Enum.Font.GothamBold, VER_TEXT_LABEL)
+    makeLabel(bb, "DistLabel", UDim2.new(0, 0, 0, 18), UDim2.new(1, 0, 0, 14), VER_OUTLINE, Enum.Font.GothamMedium, "")
+
+    verBillboards[model] = bb
+    createVERLight(model)
+end
+
+local function scanForVER()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj.Name == "VER" then
+            createVERHighlight(obj)
+        end
+    end
+end
+
+local function createPlayerHighlight(plr)
+    if plr == LP then return end
+    if playerHighlights[plr] then return end
+    local hl = Instance.new("Highlight")
+    hl.Name = "PlayerESP"
+    hl.FillColor = PLAYER_COLOR
+    hl.FillTransparency = 0.7
+    hl.OutlineColor = PLAYER_COLOR
+    hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Parent = LP.PlayerGui
+    playerHighlights[plr] = hl
+end
+
+local function createPlayerBillboard(plr)
+    if plr == LP then return end
+    if playerBillboards[plr] then return end
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "PlayerNameESP"
+    bb.Size = UDim2.new(0, 150, 0, 32)
+    bb.StudsOffsetWorldSpace = Vector3.new(0, 3.1, 0)
+    bb.AlwaysOnTop = true
+    bb.MaxDistance = MAX_DISTANCE
+    bb.LightInfluence = 0
+    bb.ResetOnSpawn = false
+    bb.Parent = LP.PlayerGui
+
+    makeLabel(bb, "NameLabel", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 17), PLAYER_COLOR, Enum.Font.GothamBold, plr.Name)
+    makeLabel(bb, "DistLabel", UDim2.new(0, 0, 0, 17), UDim2.new(1, 0, 0, 13), PLAYER_COLOR, Enum.Font.GothamMedium, "")
+
+    playerBillboards[plr] = bb
+end
+
+local function createPlayerLight(plr)
+    if plr == LP then return end
+    if playerLights[plr] then return end
+    local char = plr.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    local light = Instance.new("PointLight")
+    light.Name = "PlayerLight"
+    light.Brightness = LIGHT_BRIGHTNESS
+    light.Range = LIGHT_RADIUS
+    light.Color = Color3.fromRGB(255, 255, 255)
+    light.Shadows = true
+    light.Parent = root
+    playerLights[plr] = light
+end
+
+local function updateVER()
+    for model, bb in pairs(verBillboards) do
+        if not model.Parent then
+            if verHighlights[model] then verHighlights[model]:Destroy() end
+            if verLights[model] then verLights[model]:Destroy() end
+            verBillboards[model] = nil
+            verHighlights[model] = nil
+            verLights[model] = nil
+            continue
+        end
+        local root = model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
+        if root then
+            bb.Adornee = root
+            local dist = (Camera.CFrame.Position - root.Position).Magnitude
+            local dl = bb:FindFirstChild("DistLabel")
+            if dl then dl.Text = math.floor(dist) .. " m" end
+        end
+    end
+end
+
+local function updatePlayers()
+    for plr, bb in pairs(playerBillboards) do
+        if not plr.Parent then
+            if playerHighlights[plr] then playerHighlights[plr]:Destroy() end
+            if playerLights[plr] then playerLights[plr]:Destroy() end
+            playerBillboards[plr] = nil
+            playerHighlights[plr] = nil
+            playerLights[plr] = nil
+            continue
+        end
+        local char = plr.Character
+        if not char then continue end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+        bb.Adornee = hrp
+        if playerHighlights[plr] then
+            playerHighlights[plr].Adornee = char
+        end
+        local dist = (Camera.CFrame.Position - hrp.Position).Magnitude
+        local dl = bb:FindFirstChild("DistLabel")
+        if dl then dl.Text = math.floor(dist) .. " m" end
+    end
+end
+
+local function setupPlayer(plr)
+    if plr == LP then return end
+    createPlayerHighlight(plr)
+    createPlayerBillboard(plr)
+    plr.CharacterAdded:Connect(function(char)
+        task.wait(0.2)
+        char:WaitForChild("HumanoidRootPart", 5)
+        createPlayerLight(plr)
+        if playerBillboards[plr] then
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if hrp then playerBillboards[plr].Adornee = hrp end
+        end
+    end)
+    if plr.Character then
+        createPlayerLight(plr)
+    end
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do setupPlayer(plr) end
+Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerRemoving:Connect(function(plr)
+    if playerHighlights[plr] then playerHighlights[plr]:Destroy() playerHighlights[plr] = nil end
+    if playerBillboards[plr] then playerBillboards[plr]:Destroy() playerBillboards[plr] = nil end
+    if playerLights[plr] then playerLights[plr]:Destroy() playerLights[plr] = nil end
+end)
+
+workspace.DescendantAdded:Connect(function(obj)
+    if obj:IsA("Model") and obj.Name == "VER" then
+        task.wait(0.1)
+        createVERHighlight(obj)
+    end
+end)
+
+workspace.DescendantRemoving:Connect(function(obj)
+    if verHighlights[obj] then verHighlights[obj] = nil end
+    if verBillboards[obj] then verBillboards[obj] = nil end
+    if verLights[obj] then verLights[obj] = nil end
+end)
+
+task.spawn(function()
+    while task.wait(2) do
+        scanForVER()
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    updateVER()
+    updatePlayers()
+end)
+
+local playerLight = Instance.new("PointLight")
+playerLight.Name = "LocalPlayerLight"
+playerLight.Brightness = LIGHT_BRIGHTNESS
+playerLight.Range = LIGHT_RADIUS
+playerLight.Color = Color3.fromRGB(255, 255, 255)
+playerLight.Shadows = true
+
+local function attachLocalLight(char)
+    local hrp = char:WaitForChild("HumanoidRootPart", 10)
+    if hrp then
+        playerLight.Parent = hrp
+    end
+end
+
+if LP.Character then
+    attachLocalLight(LP.Character)
+end
+LP.CharacterAdded:Connect(attachLocalLight)
+
+scanForVER()
