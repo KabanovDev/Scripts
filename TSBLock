@@ -1,0 +1,210 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local CONFIG = {
+    Key = Enum.KeyCode.C,
+    FOV = 500,
+    TeamCheck = false,
+    WallCheck = false,
+    TargetPart = "Head",
+}
+
+local enabled = false
+local lockedTarget = nil
+local lockedHighlight = nil
+local connection = nil
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AimlockIndicator"
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local indicator = Instance.new("Frame")
+indicator.Size = UDim2.new(0, 14, 0, 14)
+indicator.Position = UDim2.new(1, -24, 1, -24)
+indicator.BackgroundColor3 = Color3.fromRGB(255, 40, 40)
+indicator.BorderSizePixel = 0
+indicator.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(1, 0)
+corner.Parent = indicator
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 1.5
+stroke.Color = Color3.fromRGB(20, 20, 20)
+stroke.Transparency = 0.3
+stroke.Parent = indicator
+
+local function updateIndicator()
+    if enabled then
+        indicator.BackgroundColor3 = Color3.fromRGB(40, 220, 40)
+        stroke.Color = Color3.fromRGB(15, 90, 15)
+    else
+        indicator.BackgroundColor3 = Color3.fromRGB(255, 40, 40)
+        stroke.Color = Color3.fromRGB(90, 15, 15)
+    end
+end
+
+local function clearHighlight()
+    if lockedHighlight then
+        lockedHighlight:Destroy()
+        lockedHighlight = nil
+    end
+end
+
+local function applyHighlight(character)
+    clearHighlight()
+    if not character then return end
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "AimlockHighlight"
+    hl.FillColor = Color3.fromRGB(255, 0, 0)
+    hl.FillTransparency = 1
+    hl.OutlineColor = Color3.fromRGB(255, 0, 0)
+    hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Adornee = character
+    hl.Parent = character
+
+    lockedHighlight = hl
+end
+
+local function getClosestPlayer()
+    local closest = nil
+    local shortestDist = CONFIG.FOV
+    local myChar = LocalPlayer.Character
+    if not myChar then return nil end
+    local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+
+        local char = player.Character
+        if not char then continue end
+
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hum or hum.Health <= 0 then continue end
+
+        if CONFIG.TeamCheck and player.Team == LocalPlayer.Team then continue end
+
+        local targetPart = char:FindFirstChild(CONFIG.TargetPart) or char:FindFirstChild("HumanoidRootPart")
+        if not targetPart then continue end
+
+        if CONFIG.WallCheck then
+            local rayParams = RaycastParams.new()
+            rayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+            rayParams.FilterType = Enum.RaycastFilterType.Exclude
+            local origin = Camera.CFrame.Position
+            local direction = targetPart.Position - origin
+            local result = workspace:Raycast(origin, direction, rayParams)
+            if result and not result.Instance:IsDescendantOf(char) then
+                continue
+            end
+        end
+
+        local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+        if not onScreen then continue end
+
+        local centerX = Camera.ViewportSize.X / 2
+        local centerY = Camera.ViewportSize.Y / 2
+        local dist = math.sqrt((screenPos.X - centerX)^2 + (screenPos.Y - centerY)^2)
+
+        if dist < shortestDist then
+            shortestDist = dist
+            closest = targetPart
+        end
+    end
+
+    return closest
+end
+
+local function applyYaw()
+    if not enabled or not lockedTarget then return end
+
+    local char = LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local rootPos = root.Position
+    local targetPos = lockedTarget.Position
+
+    local flatDir = Vector3.new(targetPos.X - rootPos.X, 0, targetPos.Z - rootPos.Z)
+    if flatDir.Magnitude < 0.001 then return end
+
+    local yaw = math.atan2(-flatDir.X, -flatDir.Z)
+    root.CFrame = CFrame.new(rootPos) * CFrame.Angles(0, yaw, 0)
+end
+
+local function onRenderStep()
+    if not enabled then return end
+    applyYaw()
+end
+
+local function setAutoRotate(state)
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.AutoRotate = state
+    end
+end
+
+local function toggle()
+    enabled = not enabled
+
+    if enabled then
+        local target = getClosestPlayer()
+        if not target then
+            enabled = false
+            updateIndicator()
+            return
+        end
+        lockedTarget = target
+        applyHighlight(target.Parent)
+        setAutoRotate(false)
+        applyYaw()
+        connection = RunService.RenderStepped:Connect(onRenderStep)
+    else
+        lockedTarget = nil
+        clearHighlight()
+        setAutoRotate(true)
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+    end
+
+    updateIndicator()
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == CONFIG.Key then
+        toggle()
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    if enabled then
+        enabled = false
+        lockedTarget = nil
+        clearHighlight()
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+        updateIndicator()
+    end
+    local hum = char:WaitForChild("Humanoid")
+    hum.AutoRotate = not enabled
+end)
+
+updateIndicator()
