@@ -1,0 +1,27 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local TARGET_SPEED = 24
+
+local function hookHumanoid(hum)
+    hum.WalkSpeed = TARGET_SPEED
+    hum:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+        if hum.WalkSpeed ~= TARGET_SPEED then
+            hum.WalkSpeed = TARGET_SPEED
+        end
+    end)
+end
+
+local function onCharacter(character)
+    local hum = character:WaitForChild("Humanoid", 10)
+    if hum then
+        hookHumanoid(hum)
+    end
+end
+
+if LocalPlayer.Character then
+    onCharacter(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(onCharacter)
